@@ -1,2 +1,2 @@
-pyTelegramBotAPI==8426596160:AAGo_oj5PTsINb5gSCsNv2T2fQF_8BtVMow
+pyTelegramBotAPI
 yt-dlp
