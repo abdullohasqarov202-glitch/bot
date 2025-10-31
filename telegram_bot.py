@@ -4,9 +4,10 @@ import yt_dlp
 from flask import Flask, request
 import tempfile
 
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
-bot = telebot.TeleBot(TOKEN)
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+bot = telebot."TELEGRAM_TOKEN(TOKEN)
 app = Flask(__name__)
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 
 @app.route('/webhook/' + TOKEN, methods=['POST'])
 def webhook():
