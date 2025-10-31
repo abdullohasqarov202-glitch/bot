@@ -4,21 +4,21 @@ import telebot
 import yt_dlp
 import tempfile
 
-# 🔑 Telegram token
+# 🔑 Telegram token (Render Environment Variables ichiga qo‘shilgan bo‘lishi kerak)
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 if not TELEGRAM_TOKEN:
-    raise RuntimeError("❌ TELEGRAM_TOKEN aniqlanmadi!")
+    raise RuntimeError("❌ TELEGRAM_TOKEN aniqlanmadi! Render yoki lokal muhitda qo‘shing.")
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 app = Flask(__name__)
 
-# 📢 Kanal
+# 📢 Kanal username
 CHANNEL_USERNAME = "@Asqarov_2007"
 
-# 🍪 Cookie fayl (agar kerak bo‘lsa)
+# 🍪 Cookie fayl (agar mavjud bo‘lsa)
 COOKIE_FILE = "cookies.txt"
 
-# ✅ Obuna tekshirish
+# ✅ Obuna tekshirish funksiyasi
 def is_subscribed(user_id):
     try:
         member = bot.get_chat_member(CHANNEL_USERNAME, user_id)
@@ -26,7 +26,7 @@ def is_subscribed(user_id):
     except Exception:
         return False
 
-# 🔹 Start
+# 🚀 /start komandasi
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
@@ -48,7 +48,7 @@ def start(message):
         "🎥 Video yoki qo‘shiq havolasini yuboring (TikTok, YouTube, Instagram, Facebook yoki X)."
     )
 
-# 🔁 Obunani tekshirish
+# 🔁 Obunani tekshirish tugmasi
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def check_sub(call):
     user_id = call.message.chat.id
@@ -62,10 +62,10 @@ def check_sub(call):
         bot.answer_callback_query(call.id, "🚫 Hali obuna bo‘lmagansiz!")
 
 # 🎬 Video yoki Audio yuklash
-@bot.message_handler(func=lambda message: any(x in message.text for x in ["youtu", "tiktok", "instagram", "facebook", "x.com"]))
+@bot.message_handler(func=lambda message: any(x in message.text.lower() for x in ["youtu", "tiktok", "instagram", "facebook", "x.com"]))
 def download_video(message):
     url = message.text.strip()
-    bot.reply_to(message, "⏳ Yuklab olinmoqda, iltimos kuting...")
+    bot.reply_to(message, "⏳ Yuklab olinmoqda, biroz kuting...")
 
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -75,8 +75,8 @@ def download_video(message):
                 'quiet': True,
                 'noplaylist': True,
                 'cookiefile': COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
-                # ⚡ YouTube 429 bypass uchun:
-                'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
+                # ⚙️ YouTube uchun 429 xatolikni kamaytirish
+                'extractor_args': {'youtube': {'player_client': ['web']}},
             }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -91,7 +91,7 @@ def download_video(message):
     except Exception as e:
         bot.reply_to(message, f"❌ Xatolik: {e}")
 
-# 🌐 Webhook yo‘li
+# 🌐 Webhook yo‘li (Telegram uchun)
 @app.route(f"/webhook/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
     json_str = request.get_data().decode("utf-8")
@@ -104,6 +104,7 @@ def webhook():
 def home():
     return "<h3>✅ Bot ishlayapti (TikTok, YouTube, Instagram, Facebook, X yuklab beruvchi)</h3>"
 
+# ▶️ Ishga tushirish
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
