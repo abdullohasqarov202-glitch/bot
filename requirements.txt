@@ -1,4 +1,4 @@
-yt-dlp>=2024.10.07
-ffmpeg
-flask
-pytelegrambotapi
+Flask==3.0.3
+pyTelegramBotAPI==4.15.4
+yt-dlp==2025.1.1
+gunicorn==23.0.0
