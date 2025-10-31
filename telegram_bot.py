@@ -323,13 +323,9 @@ def check_weekly_winner():
 
 threading.Thread(target=check_weekly_winner, daemon=True).start()
 
-
-# 🧩 Flask webhook
-@app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
+@app.route(f"/webhook/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
-    update = telebot.types.Update.de_json(request.get_data().decode('utf-8'))
-    bot.process_new_updates([update])
-    return "OK", 200
+
 
 
 @app.route("/")
