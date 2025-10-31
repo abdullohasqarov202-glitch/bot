@@ -6,7 +6,7 @@ import tempfile
 import time
 from yt_dlp.utils import DownloadError
 
-# 🔑 Telegram token
+# 🔑 Telegram token (Renderda Environment Variable sifatida qo‘shiladi)
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 if not TELEGRAM_TOKEN:
     raise RuntimeError("❌ TELEGRAM_TOKEN aniqlanmadi!")
@@ -17,8 +17,9 @@ app = Flask(__name__)
 # 📢 Kanal username
 CHANNEL_USERNAME = "@Asqarov_2007"
 
-# 🍪 Cookie fayl
+# 🍪 Cookie fayl (ixtiyoriy)
 COOKIE_FILE = "cookies.txt"
+
 
 # ✅ Obuna tekshirish
 def is_subscribed(user_id):
@@ -62,7 +63,7 @@ def check_sub(call):
         bot.answer_callback_query(call.id, "🚫 Hali obuna bo‘lmagansiz!")
 
 
-# 🎬 Video yuklash (TikTok, Instagram, YouTube)
+# 🎬 Video yuklash (TikTok, Instagram, YouTube, Facebook, X)
 @bot.message_handler(func=lambda message: any(x in message.text.lower() for x in ["youtu", "tiktok", "instagram", "facebook", "x.com"]))
 def download_video(message):
     url = message.text.strip()
@@ -109,7 +110,7 @@ def download_video(message):
         bot.reply_to(message, f"❌ Xatolik: {e}")
 
 
-# 🎵 Musiqa nomidan MP3 yuklab berish (YouTube search)
+# 🎵 Musiqa nomidan MP3 yuklab berish (YouTube qidiruv orqali)
 @bot.message_handler(func=lambda message: True)
 def search_music(message):
     query = message.text.strip()
@@ -131,35 +132,4 @@ def search_music(message):
                 }],
             }
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(f"ytsearch1:{query}", download=True)
-                file_path = ydl.prepare_filename(info['entries'][0])
-                title = info['entries'][0].get('title', 'musiqa')
-
-            caption = f"🎵 <b>{title}</b>\n\nYuklab beruvchi: <a href='https://t.me/asqarov_uzbot'>@asqarov_uzbot</a>"
-            with open(file_path.replace('.webm', '.mp3'), 'rb') as audio:
-                bot.send_audio(message.chat.id, audio, caption=caption, parse_mode="HTML")
-
-    except Exception as e:
-        bot.reply_to(message, f"❌ Xatolik: {e}")
-
-
-# 🌐 Webhook yo‘li
-@app.route(f"/webhook/{TELEGRAM_TOKEN}", methods=["POST"])
-def webhook():
-    json_str = request.get_data().decode("utf-8")
-    update = telebot.types.Update.de_json(json_str)
-    bot.process_new_updates([update])
-    return "OK", 200
-
-
-# 🏠 Asosiy sahifa
-@app.route("/")
-def home():
-    return "<h3>✅ Asqarov Video & Musiqa Yuklab beruvchi bot ishlayapti!</h3>"
-
-
-# ▶️ Ishga tushirish
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+            with yt_dlp.YoutubeDL(ydl_opts) as
