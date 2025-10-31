@@ -142,7 +142,7 @@ def download_music(message):
                 title = info.get("title", "musiqa")
 
             with open(file_path, "rb") as audio:
-                bot.send_audio(message.chat.id, audio, caption=f"🎶 {title}\n\nYuklab beruvchi: @asqarov_uzbot")
+                bot.send_audio(message.chat.id, audio, caption=f"🎶 {title}\n\nYuklab beruvchi: @shazam_uzzbot")
     except Exception as e:
         bot.reply_to(message, f"❌ Yuklab bo‘lmadi: {e}")
 
@@ -174,7 +174,7 @@ def search_music(message):
                 title = entry.get("title", "musiqa")
 
             with open(file_path, "rb") as audio:
-                bot.send_audio(message.chat.id, audio, caption=f"🎵 {title}\n\nYuklab beruvchi: @asqarov_uzbot")
+                bot.send_audio(message.chat.id, audio, caption=f"🎵 {title}\n\nYuklab beruvchi: @shazam_uzzbot")
     except Exception as e:
         bot.reply_to(message, f"❌ Yuklab bo‘lmadi: {e}")
 
@@ -182,7 +182,7 @@ def search_music(message):
 # 🎥 Video yuklash (TikTok, Instagram, Facebook, X)
 @bot.message_handler(func=lambda message: any(x in message.text for x in ["tiktok", "instagram", "facebook", "x.com", "twitter"]))
 def download_video(message):
-    url = message.text.strip()
+ 
     bot.reply_to(message, "⏳ Video yuklanmoqda...")
 
     try:
@@ -199,7 +199,7 @@ def download_video(message):
                 video_path = ydl.prepare_filename(info)
                 title = info.get("title", "video")
 
-            caption = f"🎬 <b>{title}</b>\n\nYuklab beruvchi: <a href='https://t.me/asqarov_uzbot'>@asqarov_uzbot</a>"
+            caption = f"🎬 <b>{title}</b>\n\nYuklab beruvchi: <a href='https://t.me/shazam_uzzbot'>@shazam_uzzbot</a>"
             with open(video_path, "rb") as video:
                 bot.send_video(message.chat.id, video, caption=caption, parse_mode="HTML")
     except Exception as e:
