@@ -1,4 +1,4 @@
-import os
+     import os
 from flask import Flask, request
 import telebot
 import yt_dlp
@@ -182,7 +182,7 @@ def search_music(message):
 # 🎥 Video yuklash (TikTok, Instagram, Facebook, X)
 @bot.message_handler(func=lambda message: any(x in message.text for x in ["tiktok", "instagram", "facebook", "x.com", "twitter"]))
 def download_video(message):
- 
+    url = message.text.strip()  # ✅ BU QATOR QO‘SHILDI
     bot.reply_to(message, "⏳ Video yuklanmoqda...")
 
     try:
