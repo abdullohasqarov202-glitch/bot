@@ -4,8 +4,6 @@ import telebot
 import yt_dlp
 import tempfile
 from datetime import datetime, timedelta
-import threading
-import time
 
 # 1️⃣ Telegram token
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
@@ -65,11 +63,11 @@ def send_welcome(message):
             "👋 <b>Salom!</b> Men sizga yordam beruvchi <b>video yuklab beruvchi botman</b>!\n\n"
             "📽 <b>Men nimalar qila olaman:</b>\n"
             "• TikTok, Instagram, Facebook va X (Twitter) videolarini yuklab beraman 🎥\n"
-            "• Eng so‘nggi kinolar kanaliga yo‘naltiraman 🎬\n"
+            "• YouTube’dan qo‘shiqlarni yuklab beraman 🎵\n"
+            "• Kinolar kanaliga yo‘naltiraman 🎬\n"
             "• Do‘stlaringizni taklif qilib olmos yig‘ish imkoniyati bor 💎\n"
-            "• Har hafta eng ko‘p olmos to‘plagan foydalanuvchi — Premium yutadi 🏆\n"
-            "• Bonus olish 🎁 va reklama joylash 📢 imkoniyati mavjud 💰\n\n"
-            "👇 Quyidagi menyudan kerakli bo‘limni tanlang va boshlaymiz!"
+            "• Har hafta eng ko‘p olmos to‘plagan foydalanuvchi — Premium yutadi 🏆\n\n"
+            "👇 Quyidagi menyudan kerakli bo‘limni tanlang!"
         )
         bot.send_message(user_id, intro_text, parse_mode="HTML")
 
@@ -85,13 +83,9 @@ def send_welcome(message):
 # 🔄 Menyu
 def show_menu(message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("🎥 Video yuklash", "🎬 Kinolar")
-    markup.add("💰 Pul ishlash", "🎁 Bonus olish")
-    markup.add("🔗 Referal havola", "💎 Mening olmoslarim")
-    markup.add("📊 Statistika", "📢 Reklama berish")
-    markup.add("📩 Admin bilan aloqa", "💎 Premium olish")
-    if message.from_user.username == ADMIN_USERNAME[1:]:
-        markup.add("👤 Foydalanuvchilar ro‘yxati")
+    markup.add("🎥 Video yuklash", "🎵 Qo‘shiq yuklash")
+    markup.add("🎬 Kinolar", "💎 Mening olmoslarim")
+    markup.add("🔗 Referal havola", "📩 Admin bilan aloqa")
     bot.send_message(message.chat.id, "📍 Quyidagi menyudan tanlang:", reply_markup=markup)
 
 # 🔁 Obuna qayta tekshirish
@@ -103,11 +97,6 @@ def check_subscription(call):
         send_welcome(call.message)
     else:
         bot.answer_callback_query(call.id, "🚫 Hali obuna bo‘lmagansiz!")
-
-# 📩 Aloqa
-@bot.message_handler(func=lambda message: message.text == "📩 Admin bilan aloqa")
-def contact_admin(message):
-    bot.reply_to(message, "📞 Admin: @Asqarov_0207")
 
 # 💎 Balans
 @bot.message_handler(func=lambda message: message.text == "💎 Mening olmoslarim")
@@ -121,6 +110,11 @@ def referral_link(message):
     link = f"https://t.me/{bot.get_me().username}?start={message.chat.id}"
     bot.reply_to(message, f"🔗 Sizning taklif havolangiz:\n{link}\n\nHar bir do‘st uchun +10 💎 olmos!")
 
+# 📩 Aloqa
+@bot.message_handler(func=lambda message: message.text == "📩 Admin bilan aloqa")
+def contact_admin(message):
+    bot.reply_to(message, "📞 Admin: @Asqarov_0207")
+
 # 🎬 Kinolar
 @bot.message_handler(func=lambda message: message.text == "🎬 Kinolar")
 def open_movies_channel(message):
@@ -133,29 +127,36 @@ def open_movies_channel(message):
 def ask_video_link(message):
     bot.reply_to(message, "🎥 Video havolasini yuboring (TikTok, Instagram, Facebook yoki Twitter).")
 
-@bot.message_handler(func=lambda message: message.text.startswith("http"))
-def download_video(message):
+# 🎵 Qo‘shiq yuklash
+@bot.message_handler(func=lambda message: message.text == "🎵 Qo‘shiq yuklash")
+def ask_music_link(message):
+    bot.reply_to(message, "🎵 YouTube havolasini yuboring (masalan: https://youtu.be/...)")
+
+# 🎵 YouTube audio yuklash
+@bot.message_handler(func=lambda message: "youtu" in message.text)
+def download_music(message):
     url = message.text.strip()
-    bot.reply_to(message, "⏳ Yuklab olinmoqda...")
+    bot.reply_to(message, "🎶 Qo‘shiq yuklab olinmoqda, biroz kuting...")
     try:
-        if not any(d in url for d in ["tiktok.com", "instagram.com", "facebook.com", "x.com", "twitter.com", "fb.watch"]):
-            bot.reply_to(message, "⚠️ Faqat TikTok, Instagram, Facebook yoki Twitter havolasi yuboring.")
-            return
         with tempfile.TemporaryDirectory() as tmpdir:
             ydl_opts = {
+                'format': 'bestaudio/best',
                 'outtmpl': os.path.join(tmpdir, '%(title)s.%(ext)s'),
-                'cookiefile': COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
-                'format': 'mp4',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
                 'quiet': True
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                video_path = ydl.prepare_filename(info)
-            caption = "✨ <b>Yuklab beruvchi:</b> <a href='https://t.me/asqarov_uzbot'>@asqarov_uzbot</a> 💫"
-            markup = telebot.types.InlineKeyboardMarkup()
-            markup.add(telebot.types.InlineKeyboardButton("➕ Kanalga qo‘shilish", url=f"https://t.me/{CHANNEL_USERNAME[1:]}"))
-            with open(video_path, 'rb') as v:
-                bot.send_video(message.chat.id, v, caption=caption, parse_mode='HTML', reply_markup=markup)
+                audio_path = ydl.prepare_filename(info).replace(".webm", ".mp3").replace(".m4a", ".mp3")
+                title = info.get("title", "Qo‘shiq")
+
+            caption = f"🎵 <b>{title}</b>\n\nYuklab beruvchi: <a href='https://t.me/asqarov_uzbot'>@asqarov_uzbot</a>"
+            with open(audio_path, 'rb') as audio:
+                bot.send_audio(message.chat.id, audio, caption=caption, parse_mode="HTML")
     except Exception as e:
         bot.reply_to(message, f"❌ Xatolik: {e}")
 
@@ -169,7 +170,7 @@ def webhook():
 
 @app.route("/")
 def home():
-    return "<h2>✅ Bot ishlayapti!</h2><p>TikTok, Instagram, Facebook, Twitter videolarini yuklab beruvchi bot.</p>"
+    return "<h2>✅ Bot ishlayapti!</h2><p>Video va qo‘shiqlarni yuklab beruvchi bot.</p>"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
