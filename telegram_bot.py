@@ -3,8 +3,10 @@ from flask import Flask, request
 import telebot
 import yt_dlp
 import tempfile
+import time
+from yt_dlp.utils import DownloadError
 
-# 🔑 Telegram token (Render Environment Variables ichiga qo‘shilgan bo‘lishi kerak)
+# 🔑 Telegram token
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 if not TELEGRAM_TOKEN:
     raise RuntimeError("❌ TELEGRAM_TOKEN aniqlanmadi! Render yoki lokal muhitda qo‘shing.")
@@ -15,7 +17,7 @@ app = Flask(__name__)
 # 📢 Kanal username
 CHANNEL_USERNAME = "@Asqarov_2007"
 
-# 🍪 Cookie fayl (agar mavjud bo‘lsa)
+# 🍪 Cookie fayl (ixtiyoriy)
 COOKIE_FILE = "cookies.txt"
 
 # ✅ Obuna tekshirish funksiyasi
@@ -48,7 +50,7 @@ def start(message):
         "🎥 Video yoki qo‘shiq havolasini yuboring (TikTok, YouTube, Instagram, Facebook yoki X)."
     )
 
-# 🔁 Obunani tekshirish tugmasi
+# 🔁 Obunani tekshirish
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def check_sub(call):
     user_id = call.message.chat.id
@@ -61,7 +63,7 @@ def check_sub(call):
     else:
         bot.answer_callback_query(call.id, "🚫 Hali obuna bo‘lmagansiz!")
 
-# 🎬 Video yoki Audio yuklash
+# 🎬 Video yoki audio yuklash
 @bot.message_handler(func=lambda message: any(x in message.text.lower() for x in ["youtu", "tiktok", "instagram", "facebook", "x.com"]))
 def download_video(message):
     url = message.text.strip()
@@ -75,14 +77,31 @@ def download_video(message):
                 'quiet': True,
                 'noplaylist': True,
                 'cookiefile': COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
-                # ⚙️ YouTube uchun 429 xatolikni kamaytirish
-                'extractor_args': {'youtube': {'player_client': ['web']}},
+                # ⚙️ YouTube uchun 429 va SABR muammosini kamaytirish
+                'extractor_args': {'youtube': {'player_client': ['web', 'android', 'ios']}},
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Chrome/125.0.0.0 Mobile Safari/537.36)'
+                },
+                'retries': 5,
+                'fragment_retries': 5,
+                'skip_unavailable_fragments': True,
             }
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                file_path = ydl.prepare_filename(info)
-                title = info.get("title", "video")
+            max_retries = 3
+            for attempt in range(1, max_retries + 1):
+                try:
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(url, download=True)
+                        file_path = ydl.prepare_filename(info)
+                        title = info.get("title", "video")
+                    break
+                except DownloadError as e:
+                    if "429" in str(e) and attempt < max_retries:
+                        wait = 3 * attempt
+                        bot.send_message(message.chat.id, f"⚠️ 429 xato. {wait}s kutayapman ({attempt}/{max_retries})...")
+                        time.sleep(wait)
+                        continue
+                    raise
 
             caption = f"🎬 <b>{title}</b>\n\nYuklab beruvchi: <a href='https://t.me/asqarov_uzbot'>@asqarov_uzbot</a>"
             with open(file_path, 'rb') as video:
@@ -91,7 +110,7 @@ def download_video(message):
     except Exception as e:
         bot.reply_to(message, f"❌ Xatolik: {e}")
 
-# 🌐 Webhook yo‘li (Telegram uchun)
+# 🌐 Webhook yo‘li
 @app.route(f"/webhook/{TELEGRAM_TOKEN}", methods=["POST"])
 def webhook():
     json_str = request.get_data().decode("utf-8")
