@@ -245,7 +245,7 @@ def download_video(message):
                 info = ydl.extract_info(url, download=True)
                 video_path = ydl.prepare_filename(info)
 
-            caption = "✨ <b>Yuklab beruvchi:</b> <a href='https://t.me/asqarov_uzbot'>@asqarov_uzbot</a> 💫"
+            caption = "✨ <b>Yuklab beruvchi:</b> <a href='https://t.me/shazam_uzzbot'>@shazam_uzzbot</a> 💫"
             markup = telebot.types.InlineKeyboardMarkup()
             markup.add(telebot.types.InlineKeyboardButton("➕ Kanalga qo‘shilish", url=f"https://t.me/{CHANNEL_USERNAME[1:]}"))
 
